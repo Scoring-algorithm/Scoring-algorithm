@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, roc_auc_score
 import joblib
 import os
+from pathlib import Path
 
 # ---------------------------------------------------------
 # 1. Генерация синтетических данных
@@ -33,14 +34,18 @@ for idx, row in df.iterrows():
             df.at[idx, 'device_id'] = 'unknown-pc' # Фроды часто с левых устройств
 
 # ---------------------------------------------------------
-# 2. Feature Engineering (ТОЧНО ТАКАЯ ЖЕ ЛОГИКА, КАК В BACKEND)
+# 2. Feature Engineering (ИСПРАВЛЕНО)
 # ---------------------------------------------------------
 print("Расчет признаков (Feature Engineering)...")
 
 # Сортируем по времени (в синтетике нет времени, поэтому просто по индексу)
 df = df.reset_index(drop=True)
 
-features = []
+# Создаем пустые списки для новых признаков
+amount_ratios = []
+is_new_devices = []
+tx_count_histories = []
+
 for idx, row in df.iterrows():
     user_id = row['user_id']
     device_id = row['device_id']
@@ -62,29 +67,28 @@ for idx, row in df.iterrows():
         
     amount_ratio = amount / avg_amount if avg_amount > 0 else 1.0
     
-    features.append({
-        'amount': amount,
-        'amount_ratio': round(amount_ratio, 2),
-        'is_new_device': is_new_device,
-        'tx_count_history': tx_count_history
-    })
+    # Сохраняем только новые признаки (без amount!)
+    amount_ratios.append(round(amount_ratio, 2))
+    is_new_devices.append(is_new_device)
+    tx_count_histories.append(tx_count_history)
 
-# Добавляем фичи в датасет
-features_df = pd.DataFrame(features)
-df = pd.concat([df, features_df], axis=1)
+# Присваиваем новые колонки прямо в df (никакого concat!)
+df['amount_ratio'] = amount_ratios
+df['is_new_device'] = is_new_devices
+df['tx_count_history'] = tx_count_histories
 
 # ---------------------------------------------------------
 # 3. Обучение модели
 # ---------------------------------------------------------
 print("Обучение модели...")
-# ВАЖНО: Модель должна учиться ТОЛЬКО на этих 4-х колонках
+# ВАЖНО: Теперь колонка 'amount' в df только одна
 FEATURES = ['amount', 'amount_ratio', 'is_new_device', 'tx_count_history']
 X = df[FEATURES]
 y = df['is_fraud']
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Используем Random Forest (хорошо работает с табличными данными)
+# Используем Random Forest
 model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
 model.fit(X_train, y_train)
 
@@ -110,9 +114,17 @@ prob = model.predict_proba(suspicious_tx)[0][1]
 print(f"Вероятность фрода: {prob:.2f} (ожидаем высокую)")
 
 # ---------------------------------------------------------
-# 5. Сохранение модели
+# 5. Сохранение модели (ИСПРАВЛЕНО)
 # ---------------------------------------------------------
-os.makedirs('../models/champion', exist_ok=True)
-model_path = '../models/champion/model.pkl'
+# Определяем путь к папке, где лежит этот скрипт (analytics)
+CURRENT_DIR = Path(__file__).resolve().parent 
+# Поднимаемся на уровень выше (в корень Scoring-algorithm) и заходим в models/champion
+MODEL_DIR = CURRENT_DIR.parent / 'models' / 'champion'
+
+# Создаем папку, если ее нет
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
+
+model_path = MODEL_DIR / 'model.pkl'
 joblib.dump(model, model_path)
-print(f"\nМодель успешно сохранена в {model_path}")
+
+print(f"\nМодель успешно сохранена по пути: {model_path}")

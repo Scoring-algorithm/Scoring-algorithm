@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     audit_log_path: str = "logs/audit_dev.jsonl"
 
     # Модели
-    model_path: str = "models/latest/model.pkl"
+    model_path: str = "models/champion/model.pkl"
 
     # Fallback
     fallback_enabled: bool = False
