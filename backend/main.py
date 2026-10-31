@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware  # <--- ДОБАВИТЬ
 from backend.core.config import settings
 from backend.core.logging import setup_logging, set_request_id, get_logger
 from backend.db.database import engine, Base
-from backend.api.routes import scoring, thresholds
+from backend.api.routes import scoring, thresholds, audit
 
 setup_logging()
 logger = get_logger(__name__)
@@ -31,6 +31,7 @@ async def add_request_id(request: Request, call_next):
 
 app.include_router(scoring.router)
 app.include_router(thresholds.router)
+app.include_router(audit.router)
 
 @app.get("/health")
 async def health():

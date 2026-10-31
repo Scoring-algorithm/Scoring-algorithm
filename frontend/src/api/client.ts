@@ -31,6 +31,11 @@ export const apiService = {
     return res.data;
   },
 
+  getAuditLogs: async (): Promise<any[]> => {
+    const res = await api.get('/audit');
+    return res.data;
+  },
+
   // Обновить пороги
   updateThresholds: async (low_max: number, medium_max: number): Promise<Thresholds> => {
     const res = await api.post('/thresholds', { low_max, medium_max });
