@@ -1,7 +1,7 @@
 # backend/main.py
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware  # <--- ДОБАВИТЬ
+from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
 from backend.core.logging import setup_logging, set_request_id, get_logger
 from backend.db.database import engine, Base
@@ -13,7 +13,6 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Scoring Service", version="0.1.0")
 
-# <--- ДОБАВИТЬ БЛОК CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], # Адрес фронтенда Алисы

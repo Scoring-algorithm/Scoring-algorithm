@@ -41,7 +41,7 @@ def get_dashboard_analytics(db: Session = Depends(get_db)):
     top_rejections = [{"reason": k, "count": v} for k, v in Counter(all_reasons).most_common(5)]
 
     # 3. Статистика по месяцам (Группируем по году и месяцу)
-    # Для SQLite используем strftime. Для Postgres это был бы to_char.
+    # Для SQLite используем strftime.
     month_expr = func.strftime('%Y-%m', models.Transaction.created_at)
     
     monthly_query = db.query(

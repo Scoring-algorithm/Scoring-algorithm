@@ -1,4 +1,3 @@
-# backend/services/scoring_service.py
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from backend.ml.inference import model
@@ -8,7 +7,6 @@ from backend.core.logging import get_logger, log_audit_event
 logger = get_logger(__name__)
 
 def build_features(db: Session, tx_data: dict) -> dict:
-    # ... (оставляем код из предыдущего сообщения) ...
     user_id = tx_data["user_id"]
     device_id = tx_data.get("device_id")
     

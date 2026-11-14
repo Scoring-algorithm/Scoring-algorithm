@@ -39,7 +39,7 @@ def export_transactions_csv(
     db: Session = Depends(get_db)
 ):
     """
-    Выгружает транзакции в CSV с учетом фильтров (без пагинации).
+    Выгружает транзакции в CSV с учетом фильтров.
     """
     query = db.query(models.Transaction)
     

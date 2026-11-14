@@ -1,4 +1,3 @@
-// src/pages/ThresholdsPage.tsx
 import { useEffect, useState } from 'react';
 import Button from '../components/Button';
 import Loader from '../components/Loader';

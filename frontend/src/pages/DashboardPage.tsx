@@ -1,4 +1,3 @@
-// src/pages/DashboardPage.tsx
 import { useEffect, useState, useRef } from 'react';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, 
@@ -32,7 +31,7 @@ export default function DashboardPage() {
       // 1. Делаем "скриншот" дашборда
       const canvas = await html2canvas(dashboardRef.current, {
         scale: 2, // Увеличиваем разрешение для четкости
-        backgroundColor: '#f1f5f9', // Цвет фона страницы (как в Layout)
+        backgroundColor: '#f1f5f9', // Цвет фона страницы
         useCORS: true, 
       });
 
@@ -95,7 +94,7 @@ export default function DashboardPage() {
             display: 'flex', alignItems: 'center', gap: '8px'
           }}
         >
-          {isExporting ? 'Генерация...' : '📥 Скачать PDF'}
+          {isExporting ? 'Генерация...' : 'Скачать PDF'}
         </button>
       </div>
 

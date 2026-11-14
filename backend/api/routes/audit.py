@@ -95,7 +95,7 @@ def get_audit_logs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка чтения логов: {e}")
 
-    # Теперь применяем фильтры к этим последним записям (в обратном порядке — новые сверху)
+    # Теперь применяем фильтры к этим последним записям (в обратном порядке - новые сверху)
     filtered = []
     for line in reversed(last_lines):
         if not line.strip():

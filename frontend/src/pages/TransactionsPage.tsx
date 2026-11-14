@@ -1,4 +1,3 @@
-// src/pages/TransactionsPage.tsx
 import { useEffect, useState } from 'react';
 import Badge from '../components/Badge';
 import Button from '../components/Button';
@@ -261,7 +260,7 @@ export default function TransactionsPage() {
               </div>
             </div>
 
-            {/* НОВЫЙ БЛОК: ПОРОГИ */}
+            {/* ПОРОГИ */}
             <div style={{ background: '#f8fafc', padding: 16, borderRadius: 8, marginTop: 8 }}>
               <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12, fontWeight: 600 }}>Пороги на момент решения:</div>
               
@@ -286,7 +285,7 @@ export default function TransactionsPage() {
               </div>
             </div>
             
-            {/* НОВЫЙ БЛОК: ПРИЧИНЫ РЕШЕНИЯ */}
+            {/* ПРИЧИНЫ РЕШЕНИЯ */}
             {selected.reasons && selected.reasons.length > 0 && (
               <div style={{ marginTop: 16 }}>
                 <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12, fontWeight: 600 }}>Факторы, повлиявшие на решение:</div>

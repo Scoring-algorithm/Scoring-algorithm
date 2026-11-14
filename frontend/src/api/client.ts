@@ -1,4 +1,3 @@
-// src/api/client.ts
 import axios from 'axios';
 import type { Transaction, Thresholds } from '../types/transaction';
 
@@ -50,7 +49,6 @@ export const apiService = {
   },
 
   getAuditLogs: async (params: { user_id?: string, event_type?: string, skip?: number, limit?: number }): Promise<{ items: any[], total: number }> => {
-    // ПРИМЕЧАНИЕ: Для аудита мы обновим бэкенд чуть позже, чтобы он тоже возвращал total
     const res = await api.get('/audit', { params });
     return res.data;
   },

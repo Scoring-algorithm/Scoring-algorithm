@@ -1,4 +1,3 @@
-# backend/ml/inference.py
 import os
 import joblib
 import pandas as pd
@@ -15,7 +14,7 @@ class ScoringModel:
         self.load_model()
 
     def load_model(self):
-        """Загружает модель из файла. Если файла нет — создает заглушку."""
+        """Загружает модель из файла. Если файла нет - создает заглушку."""
         try:
             # Проверяем, существует ли файл
             if os.path.exists(self.model_path):
