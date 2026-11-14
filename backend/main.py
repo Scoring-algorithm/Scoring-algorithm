@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware  # <--- ДОБАВИТЬ
 from backend.core.config import settings
 from backend.core.logging import setup_logging, set_request_id, get_logger
 from backend.db.database import engine, Base
-from backend.api.routes import scoring, thresholds, audit
+from backend.api.routes import scoring, thresholds, audit, analytics
 
 setup_logging()
 logger = get_logger(__name__)
@@ -32,6 +32,7 @@ async def add_request_id(request: Request, call_next):
 app.include_router(scoring.router)
 app.include_router(thresholds.router)
 app.include_router(audit.router)
+app.include_router(analytics.router)
 
 @app.get("/health")
 async def health():
@@ -41,3 +42,5 @@ async def health():
 async def global_exception_handler(request: Request, exc: Exception):
     logger.exception("Необработанная ошибка", extra={"path": request.url.path})
     return JSONResponse(status_code=500, content={"detail": "Internal error"})
+
+# uvicorn backend.main:app --reload

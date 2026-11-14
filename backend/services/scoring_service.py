@@ -1,4 +1,6 @@
+# backend/services/scoring_service.py
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from backend.ml.inference import model
 from backend.db import models
 from backend.core.logging import get_logger, log_audit_event
@@ -6,31 +8,26 @@ from backend.core.logging import get_logger, log_audit_event
 logger = get_logger(__name__)
 
 def build_features(db: Session, tx_data: dict) -> dict:
-    """
-    Собирает исторические признаки пользователя для модели.
-    """
+    # ... (оставляем код из предыдущего сообщения) ...
     user_id = tx_data["user_id"]
+    device_id = tx_data.get("device_id")
     
-    # 1. Идем в базу и берем все прошлые транзакции этого юзера
-    history = db.query(models.Transaction).filter(models.Transaction.user_id == user_id).all()
+    stats = db.query(
+        func.avg(models.Transaction.amount).label('avg_amount'),
+        func.count(models.Transaction.id).label('tx_count')
+    ).filter(models.Transaction.user_id == user_id).first()
     
-    if not history:
-        # Если это первая транзакция юзера
-        avg_amount = tx_data["amount"]
-        is_new_device = True
-        tx_count = 0
-    else:
-        # Считаем средний чек
-        amounts = [t.amount for t in history]
-        avg_amount = sum(amounts) / len(amounts)
-        
-        # Проверяем, видели ли мы раньше это устройство
-        known_devices = [t.device_id for t in history if t.device_id]
-        is_new_device = tx_data.get("device_id") not in known_devices
-        
-        tx_count = len(history)
+    avg_amount = stats.avg_amount if stats.avg_amount is not None else tx_data["amount"]
+    tx_count = stats.tx_count
 
-    # 2. Формируем вектор фичей
+    is_new_device = True
+    if device_id:
+        device_exists = db.query(models.Transaction.id).filter(
+            models.Transaction.user_id == user_id,
+            models.Transaction.device_id == device_id
+        ).first()
+        is_new_device = device_exists is None
+
     return {
         "amount": tx_data["amount"],
         "amount_ratio": round(tx_data["amount"] / avg_amount, 2) if avg_amount > 0 else 1.0,
@@ -39,12 +36,15 @@ def build_features(db: Session, tx_data: dict) -> dict:
     }
 
 def process_transaction(db: Session, transaction_data: dict) -> dict:
-    # 1. Собираем признаки (Feature Engineering)
+    # 1. Собираем признаки
     features = build_features(db, transaction_data)
     
     # 2. Отдаем признаки модели
     score = model.predict(features)
     
+    # 2.1. Получаем объяснения
+    reasons = model.get_explanations(features, score) 
+
     # 3. Получаем пороги
     thresholds = db.query(models.Threshold).first()
     if not thresholds:
@@ -64,18 +64,20 @@ def process_transaction(db: Session, transaction_data: dict) -> dict:
     # 5. Сохраняем в БД
     db_tx = models.Transaction(
         transaction_id=str(transaction_data.get("id", "unknown")),
-        user_id=transaction_data["user_id"],     # <--- Сохраняем ID юзера
-        device_id=transaction_data.get("device_id"), # <--- Сохраняем ID устройства
+        user_id=transaction_data["user_id"],
+        device_id=transaction_data.get("device_id"),
         amount=float(transaction_data.get("amount", 0)),
         currency=transaction_data.get("currency", "RUB"),
         score=score,
-        decision=decision
+        decision=decision,
+        threshold_low=thresholds.low_max,      
+        threshold_medium=thresholds.medium_max,
+        reasons=reasons
     )
     db.add(db_tx)
     db.commit()
     db.refresh(db_tx)
 
-    # 6. Пишем в аудит
     log_audit_event(
         event_type="score_decision",
         actor="scoring_service",
@@ -93,5 +95,21 @@ def process_transaction(db: Session, transaction_data: dict) -> dict:
         "score": score,
         "decision": decision,
         "risk_level": "low" if decision == "approve" else ("medium" if decision == "review" else "high"),
-        "features_used": features # Возвращаем фичи для отладки/объяснений
+        "features_used": features,
+        "reasons": reasons
     }
+
+# ОБНОВЛЕННАЯ ФУНКЦИЯ
+def get_filtered_transactions(db: Session, user_id: str | None = None, decision: str | None = None, skip: int = 0, limit: int = 50):
+    """Выборка последних транзакций с фильтрацией, пагинацией и общим количеством."""
+    query = db.query(models.Transaction)
+    
+    if user_id:
+        query = query.filter(models.Transaction.user_id == user_id)
+    if decision:
+        query = query.filter(models.Transaction.decision == decision)
+        
+    total = query.count()
+    items = query.order_by(models.Transaction.id.desc()).offset(skip).limit(limit).all()
+    
+    return {"items": items, "total": total}

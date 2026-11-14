@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, JSON
 from datetime import datetime, timezone
 from backend.db.database import Base
 
@@ -13,6 +13,10 @@ class Transaction(Base):
     currency = Column(String)
     score = Column(Float)
     decision = Column(String) 
+    threshold_low = Column(Float, nullable=True)
+    threshold_medium = Column(Float, nullable=True)
+    reasons = Column(JSON, nullable=True)
+    
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class Threshold(Base):
